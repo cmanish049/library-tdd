@@ -6,7 +6,7 @@ use App\Book;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
-class BookReservationTest extends TestCase
+class BookManagementTest extends TestCase
 {
     use RefreshDatabase;
 
@@ -14,22 +14,25 @@ class BookReservationTest extends TestCase
      * A basic test example.
      *
      * @return void
+     * @test
      */
-    public function test_it_can_add_book()
+    public function it_can_add_book()
     {
-        $this->withoutExceptionHandling();
         $response = $this->post('books', [
             'title' => 'Title',
             'author' => 'Author'
         ]);
 
-        $response->assertOk();
+        $book = Book::first();
+        // $response->assertOk();
         $this->assertCount(1, Book::all());
+
+        $response->assertRedirect($book->path());
     }
 
-    public function test_title_is_required()
+    /** @test */
+    public function title_is_required()
     {
-        // $this->withoutExceptionHandling();
         $response = $this->post('books', [
             'title' => '',
             'author' => 'Manish'
@@ -42,7 +45,6 @@ class BookReservationTest extends TestCase
     /** @test */
     public function author_is_required()
     {
-        // $this->withoutExceptionHandling();
         $response = $this->post('books', [
             'title' => 'Rich Dad',
             'author' => ''
@@ -55,19 +57,37 @@ class BookReservationTest extends TestCase
     /** @test */
     public function it_can_update_book()
     {
-        $this->withoutExceptionHandling();
         $this->post('books', [
             'title' => 'Title',
             'author' => 'Author'
         ]);
 
         $book = Book::first();
-        $response = $this->patch('/books/'. $book->id, [
+        $response = $this->patch($book->path(), [
             'title' => 'New Title',
             'author' => 'New Author'
         ]);
 
         $this->assertEquals('New Title', Book::first()->title);
         $this->assertEquals('New Author', Book::first()->author);
+
+        $response->assertRedirect($book->path());
+    }
+
+    /** @test */
+    public function it_can_delete_book()
+    {
+        $this->post('books', [
+            'title' => 'Title',
+            'author' => 'Author'
+        ]);
+
+        $book = Book::first();
+        $this->assertCount(1, Book::all());
+        $response = $this->delete($book->path());
+
+        $this->assertCount(0, Book::all());
+
+        $response->assertRedirect('/books');
     }
 }
